@@ -6,6 +6,11 @@
 #include <ctype.h>
 #include <stdbool.h>
 
+#define SP_DELIM "\r\n\b\t " // space delimiters
+#define MAX_CANON 256 // max characters per line
+
+long line = 1; // line counter
+
 // token types
 typedef enum {
     IDENTIFIER,
@@ -21,13 +26,9 @@ typedef enum {
 struct token {
     TokenType type;
     char *tok;
+    
     struct token *next;
 };
-
-#define SP_DELIM "\r\n\b\t " // space delimiters
-#define MAX_CANON 256 // max characters per line
-
-long line = 1; // line counter
 
 // escapse sequence
 const char *_esc[] = {
