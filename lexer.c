@@ -48,6 +48,7 @@ const char *keywords[] = {
 // check if a string is a keyword
 bool isKeyword(const char *string) {
     const int n = 32; // keywords size
+
     // find keyword
     for (int i = 0; i < n; i++) 
         if (strcmp(string, keywords[i]) == 0) 
@@ -61,8 +62,10 @@ bool isKeyword(const char *string) {
 char *read_file(const char *filename) {
     // open file in reading mode
     FILE *fp = fopen(filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Failed to open file: %s\n", filename);
+    if (!fp) {
+        fprintf(stderr, 
+                    "Failed to open file: %s\n", filename);
+        
         return NULL;
     }
 
@@ -73,24 +76,25 @@ char *read_file(const char *filename) {
 
     // allocate memory for the buffer
     char *buf = (char*)malloc((file_size + 1) * sizeof(char));
-    if (buf == NULL) {
+    if (!buf) {
         fclose(fp);
         fprintf(stderr, 
                 "Memory allocation failed!\n");
+        
         return NULL;
     }
 
     // load file content to memory
     if (fread(buf, sizeof(char), file_size, fp) != file_size) {
-        fprintf(stderr, 
-                "Failed to read file!\n");
         free(buf);
         fclose(fp);
+        fprintf(stderr, 
+                "Failed to read file!\n");
+        
         return NULL;
     }
 
     fclose(fp); // close file
-    
     buf[file_size] = '\0'; // nul terminate buffer
 
     return buf;
@@ -102,9 +106,9 @@ char **sp_tokens(char *str) {
 
     // allocate memory for tokens array
     char **tokens = (char **)malloc(size * sizeof(char*));
-    if (tokens == NULL) {
+    
+    if (!tokens) 
         return NULL;
-    }
 
     // first token 
     char *token = strtok(str, SP_DELIM);
@@ -131,6 +135,7 @@ char **sp_tokens(char *str) {
     }
 
     tokens[i] = NULL; // null terminate array
+    
     return tokens;
 }
 
@@ -142,32 +147,35 @@ const char *next(char **src, TokenType *type) {
         char token = **src;
         (*src)++; // go to the next character
     
-        if (token == '\n') {
+        if (token == '\n') 
             // if the current character is newline 
             // increment line counter
             line++; 
-        } 
+         
         // handle single line comments
         else if (token == '/' && **src == '/') {
-            while (**src != '\0' && **src != '\n') {
+            while (**src != '\0' && **src != '\n') 
                 (*src)++;
-            }
+            
             if (**src == '\n') {
                 line++;
                 (*src)++;
             }
+        
         }
         // handle multi-line comments
         else if (token == '/' && **src == '*') {
             (*src)++; // move past the *
+            
             while (**src != '\0') {
                 if (**src == '*' && *(*src + 1) == '/') {
                     (*src) += 2; // move past the */
                     break;
                 }
-                if (**src == '\n') {
+                
+                if (**src == '\n') 
                     line++;
-                }
+        
                 (*src)++;
             }
         }
@@ -175,9 +183,9 @@ const char *next(char **src, TokenType *type) {
         else if (isalpha(token) || token == '_') {
             // allocate memory to copy identifier
             char *id = (char *)malloc(MAX_CANON * sizeof(char));
-            if (id == NULL) {
+            
+            if (!id) 
                 return NULL;
-            }
     
             int k = 0; // last position of buffer
             id[k++] = token; // append character to identifier
@@ -190,6 +198,7 @@ const char *next(char **src, TokenType *type) {
             }
     
             id[k] = '\0'; // null terminate
+            
             // in case it's a keyword then change the token type
             if (isKeyword(id)) {
                 *type = KEYWORD;
@@ -197,15 +206,16 @@ const char *next(char **src, TokenType *type) {
             }
 
             *type = IDENTIFIER;
+            
             return id;
         } 
         // if the current token is a digit
         else if (isdigit(token)) {
             // store the digit as a string object
             char *num = (char *)malloc(MAX_CANON * sizeof(char));
-            if (num == NULL) {
+            
+            if (!num) 
                 return NULL;
-            }
 
             int k = 0;
             num[k++] = token;
@@ -218,17 +228,17 @@ const char *next(char **src, TokenType *type) {
             }
             
             num[k] = '\0';
-
             *type = NUMBER;
+            
             return num;
         } 
         // in case of a negative number
         // same as before but insert '-' 
         else if (token == '-' && isdigit(**src)) {
             char *num = (char *)malloc(MAX_CANON * sizeof(char));
-            if (num == NULL) {
+            
+            if (!num) 
                 return NULL;
-            }
 
             int k = 0;
             num[k++] = token;
@@ -239,21 +249,22 @@ const char *next(char **src, TokenType *type) {
             }
 
             num[k] = '\0';
-
             *type = NUMBER;
+            
             return num;
         } 
         // handle single and double quotes
         else if (token == '\'' || token == '"') {
             // allocate memory for the string literal
             char *str_lit = (char *)malloc(MAX_CANON * sizeof(char));
-            if (str_lit == NULL) {
-                return NULL;
-            }
+            
+            if (!str_lit)
+                return NULL;           
 
             char *str_lit_start = str_lit; // keep the start of the string for returning
 
             *str_lit = token; // append the current pos in src
+            
             str_lit++; // go to the next 
             (*src)++;
 
@@ -261,6 +272,7 @@ const char *next(char **src, TokenType *type) {
                 // handle common escape sequences
                 if (**src == '\\') {
                     (*src)++;
+                    
                     switch (**src) {
                         case 'n':
                             *str_lit = '\n';
@@ -295,9 +307,10 @@ const char *next(char **src, TokenType *type) {
                             *str_lit = **src;
                             break;
                     }
-                } else {
+                } 
+                else 
                     *str_lit = **src; // append the current pos to the string
-                }
+                
                 // increment to the next position
                 str_lit++; 
                 (*src)++;
@@ -305,11 +318,11 @@ const char *next(char **src, TokenType *type) {
 
             // null terminate string
             *str_lit = '\0';
-            if (**src == token) {
+            if (**src == token) 
                 (*src)++;
-            }
 
             *type = STRING_LITERAL;
+            
             return str_lit_start;
         }
         // special operator case
@@ -318,43 +331,49 @@ const char *next(char **src, TokenType *type) {
             
             // store operator in a string object
             char *op = (char *)malloc(3 * sizeof(char));
-            if (op == NULL) {
+            
+            if (!op) 
                 return NULL;
-            }
             
             op[0] = token; // append operator to string
+            
             // in case '==' or '+=' or '++' etc...
             if (**src == '=') { 
                 op[1] = **src;
                 (*src)++;
+            
                 op[2] = '\0';
             } else if ((token == '+' && **src == '+') || (token == '-' && **src == '-') ||
                        (token == '|' && **src == '|') || (token == '&' && **src == '&')) {
                 op[1] = **src;
                 (*src)++;
+                
                 op[2] = '\0';
             } else if (token == '-' && **src == '>') {
                 op[1] = **src;
                 (*src)++;
+                
                 op[2] = '\0';
-            } else {
+            } 
+            else 
                 op[1] = '\0';
-            }
 
             *type = OPERATOR;
+            
             return op;
         }
         // special characters and parentheses
         else if (strchr("^%#*?~,;[](){}.", token)) {
             char *token_str = (char *)malloc(2 * sizeof(char));
-            if (token_str == NULL) {
+            
+            if (!token_str) 
                 return NULL;
-            }
 
             token_str[0] = token; // append token
             token_str[1] = '\0'; // null terminate
             
             *type = DELIMITER;
+            
             return token_str;
         } 
     }
@@ -365,7 +384,8 @@ const char *next(char **src, TokenType *type) {
 
 /*--tokenize the input buffer--*/
 struct token *get_tokens(char *buf) {
-    if (buf == NULL) return NULL; 
+    if (!buf) 
+        return NULL; 
 
     // initialize the tokens list
     struct token *tokens = NULL;
@@ -377,22 +397,24 @@ struct token *get_tokens(char *buf) {
     while ((token = next(&buf, &type)) != NULL) {
         // allocate memory for the current token in the list
         struct token *t = (struct token*)malloc(sizeof(struct token));
-        if (t == NULL) {
+        if (!t) {
             fprintf(stderr, 
                     "Memory allocation failed!\n");
+            
             return tokens; 
         }
+        
         // set the current token data
         t->type = type;
         t->tok = (char *)token;
         t->next = NULL;
 
         // append token to the list
-        if (tokens == NULL) {
+        if (!tokens) 
             tokens = t;
-        } else {
+        else 
             last->next = t;
-        }
+        
         last = t; // keep track of the last token in the list
     }
 
@@ -401,7 +423,7 @@ struct token *get_tokens(char *buf) {
 
 // free the token list
 void free_tokens(struct token *tokens) {
-    while (tokens != NULL) {
+    while (tokens) {
         struct token *next = tokens->next;
 
         if (strcmp(tokens->tok, "") != 0) {
@@ -415,6 +437,7 @@ void free_tokens(struct token *tokens) {
 
 // convert the token type to string for output
 const char *token_type_to_string(TokenType type) {
+    
     switch (type) {
         case KEYWORD:        return "KEYWORD";
         case IDENTIFIER:     return "IDENTIFIER";
@@ -425,6 +448,7 @@ const char *token_type_to_string(TokenType type) {
         case UNKNOWN:        return "UNKNOWN";
         default:             return "UNKNOWN";
     }
+
 }
 
 /*
@@ -435,9 +459,11 @@ const char *token_type_to_string(TokenType type) {
 int main(void) {
     // open file in reading mode
     FILE *fp = fopen("file.txt", "r");
-    if (fp == NULL) {
+
+    if (!fp) {
         fprintf(stderr, 
-                "\nfailed to open file : 'file.c'\n");
+                    "\nfailed to open file : 'file.c'\n");
+        
         return -1;
     }
 
@@ -448,19 +474,23 @@ int main(void) {
 
     // allocate memory for the input buffer given the file size
     char *buf = (char*)malloc(file_size * sizeof(char));
-    if (buf == NULL) {
+    
+    if (!buf) {
         fclose(fp);
         fprintf(stderr, 
                 "memory allocation failed!\n");
+    
         return -1;
     }
 
     // try reading file and loading to buffer
     if (fread(buf, sizeof(char), file_size, fp) != file_size) {
+        fclose(fp);
+        free(buf);    
         fprintf(stderr, 
                 "\nFailed to read file!");
-        fclose(fp);
-        free(buf);
+        
+        
         return -1;
     }
 
@@ -468,10 +498,11 @@ int main(void) {
 
     // get the token list given input buffer
     struct token *tokens = get_tokens(buf);
-    if (tokens == NULL) {
+    if (!tokens) {
+        free(buf);
         fprintf(stderr, 
                 "\nFailed to tokenize buffer!\n");
-        free(buf);
+
         return -1;
     }
 
@@ -479,7 +510,8 @@ int main(void) {
 
     // print the token list
     struct token *p = tokens;
-    while (p != NULL) {
+    
+    while (p) {
         printf("%s\n", p->tok);
 
         p = p->next;
