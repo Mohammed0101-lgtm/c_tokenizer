@@ -80,7 +80,7 @@ char *read_file(const char *filename) {
     if (!buf) {
         fclose(fp);
         fprintf(stderr, 
-                "Memory allocation failed!\n");
+                    "Memory allocation failed!\n");
         
         return NULL;
     }
@@ -89,6 +89,7 @@ char *read_file(const char *filename) {
     if (fread(buf, sizeof(char), file_size, fp) != file_size) {
         free(buf);
         fclose(fp);
+        
         fprintf(stderr, 
                 "Failed to read file!\n");
         
@@ -116,17 +117,17 @@ char **sp_tokens(char *str) {
     size_t i = 0; // iterator count
 
     // tokenize string
-    while (token != NULL) {
+    while (token) {
         // append token to array
         tokens[i++] = token;
 
         // if buffer size if not enough
         // reallocate buffer memory
-        if (i >= size) {
+        if (i >= size) 
             size += size; // double buffer size
 
             char *temp = (char*)realloc(tokens, size * sizeof(char*));
-            if (temp == NULL) {
+            if (!temp) {
                 free(tokens);
                 return NULL;
             }
@@ -188,7 +189,7 @@ const char *next(char **src, TokenType *type) {
             if (!id) 
                 return NULL;
     
-            int k = 0; // last position of buffer
+            int k   = 0; // last position of buffer
             id[k++] = token; // append character to identifier
     
             // while the next character is an identifier character
@@ -218,7 +219,7 @@ const char *next(char **src, TokenType *type) {
             if (!num) 
                 return NULL;
 
-            int k = 0;
+            int k    = 0;
             num[k++] = token;
             
             // while the character is a digit
@@ -229,7 +230,7 @@ const char *next(char **src, TokenType *type) {
             }
             
             num[k] = '\0';
-            *type = NUMBER;
+            *type  = NUMBER;
             
             return num;
         } 
@@ -241,7 +242,7 @@ const char *next(char **src, TokenType *type) {
             if (!num) 
                 return NULL;
 
-            int k = 0;
+            int k    = 0;
             num[k++] = token;
 
             while (isdigit(**src)) {
@@ -250,7 +251,7 @@ const char *next(char **src, TokenType *type) {
             }
 
             num[k] = '\0';
-            *type = NUMBER;
+            *type  = NUMBER;
             
             return num;
         } 
@@ -263,8 +264,7 @@ const char *next(char **src, TokenType *type) {
                 return NULL;           
 
             char *str_lit_start = str_lit; // keep the start of the string for returning
-
-            *str_lit = token; // append the current pos in src
+            *str_lit            = token; // append the current pos in src
             
             str_lit++; // go to the next 
             (*src)++;
@@ -275,33 +275,16 @@ const char *next(char **src, TokenType *type) {
                     (*src)++;
                     
                     switch (**src) {
-                        case 'n':
-                            *str_lit = '\n';
-                            break;
-                        case 't':
-                            *str_lit = '\t';
-                            break;
-                        case 'r':
-                            *str_lit = '\r';
-                            break;
-                        case 'b':
-                            *str_lit = '\b';
-                            break;
-                        case 'f':
-                            *str_lit = '\f';
-                            break;
-                        case 'v':
-                            *str_lit = '\v';
-                            break;
-                        case '\\':
-                            *str_lit = '\\';
-                            break;
-                        case '"':
-                            *str_lit = '"';
-                            break;
-                        case '\'':
-                            *str_lit = '\'';
-                            break;
+                        case 'n' : *str_lit = '\n'; break;
+                        case 't' : *str_lit = '\t'; break;
+                        case 'r' : *str_lit = '\r'; break;
+                        case 'b' : *str_lit = '\b'; break;
+                        case 'f' : *str_lit = '\f'; break;
+                        case 'v' : *str_lit = '\v'; break;
+                        case '\\': *str_lit = '\\'; break;
+                        case '"' : *str_lit = '"' ; break;
+                        case '\'': *str_lit = '\''; break;
+                        
                         default:
                             *str_lit = '\\';
                             str_lit++;
@@ -318,7 +301,7 @@ const char *next(char **src, TokenType *type) {
             }
 
             // null terminate string
-            *str_lit = '\0';
+            *str_lit  = '\0';
             if (**src == token) 
                 (*src)++;
 
@@ -331,8 +314,7 @@ const char *next(char **src, TokenType *type) {
                  token == '+' || token == '-' || token == '|' || token == '&') {
             
             // store operator in a string object
-            char *op = (char *)malloc(3 * sizeof(char));
-            
+            char *op = (char *)malloc(3 * sizeof(char)); 
             if (!op) 
                 return NULL;
             
@@ -390,8 +372,8 @@ struct token *get_tokens(char *buf) {
 
     // initialize the tokens list
     struct token *tokens = NULL;
-    struct token *last = NULL; 
-    const char *token = NULL;
+    struct token *last   = NULL; 
+    const char *token    = NULL;
     TokenType type;
 
     // while the next token is not null
@@ -407,7 +389,7 @@ struct token *get_tokens(char *buf) {
         
         // set the current token data
         t->type = type;
-        t->tok = (char *)token;
+        t->tok  = (char *)token;
         t->next = NULL;
 
         // append token to the list
