@@ -45,7 +45,7 @@ def next_token():
                 i += 1
             if i < len(src) and src[i] == '\n':
                 line += 1
-                i += 1
+                i    += 1
         
         elif token_char == '/' and i < len(src) and src[i] == '*':
             i += 1
@@ -75,12 +75,13 @@ def next_token():
             return Token(num, 'number')
             
         elif token_char == '\'' or token_char == '"':
-            str_literal = token_char
+            str_literal  = token_char
             closing_char = token_char
+            
             while i < len(src) and src[i] != '\n' and src[i] != closing_char:
                 if src[i] == '\\' and i + 1 < len(src):
                     str_literal += src[i]
-                    i += 1
+                    i           += 1
                 str_literal += src[i]
                 i += 1
             
@@ -92,8 +93,8 @@ def next_token():
         
         elif token_char in operators:
             if i < len(src) and src[i] in operators:
-                op = token_char + src[i]
-                i += 1
+                op  = token_char + src[i]
+                i  += 1
                 return Token(op, 'operator')
             return Token(token_char, 'operator')
         
