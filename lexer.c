@@ -1,5 +1,4 @@
 /*---include c standard lib---*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,9 +50,11 @@ bool isKeyword(const char *string) {
     const int n = 32; // keywords size
 
     // find keyword
-    for (int i = 0; i < n; i++) 
-        if (strcmp(string, keywords[i]) == 0) 
+    for (int i = 0; i < n; i++) {
+        if (strcmp(string, keywords[i]) == 0) { 
             return true;
+        }
+    }
     
     // not found
     return false;
@@ -63,9 +64,9 @@ bool isKeyword(const char *string) {
 char *read_file(const char *filename) {
     // open file in reading mode
     FILE *fp = fopen(filename, "r");
-    if (!fp) {
+    if (fp == NULL) {
         fprintf(stderr, 
-                    "Failed to open file: %s\n", filename);
+                "Failed to open file: %s\n", filename);
         
         return NULL;
     }
@@ -77,22 +78,21 @@ char *read_file(const char *filename) {
 
     // allocate memory for the buffer
     char *buf = (char*)malloc((file_size + 1) * sizeof(char));
-    if (!buf) {
-        fclose(fp);
+    if (buf == NULL) {
         fprintf(stderr, 
-                    "Memory allocation failed!\n");
+                "Memory allocation failed!\n");
         
+        fclose(fp);
         return NULL;
     }
 
     // load file content to memory
     if (fread(buf, sizeof(char), file_size, fp) != file_size) {
-        free(buf);
-        fclose(fp);
-        
         fprintf(stderr, 
                 "Failed to read file!\n");
-        
+
+        free(buf);
+        fclose(fp);
         return NULL;
     }
 
@@ -105,12 +105,12 @@ char *read_file(const char *filename) {
 /*--space tokenize--*/
 char **sp_tokens(char *str) {
     size_t size = BUFSIZ; // initial buffer size
-
     // allocate memory for tokens array
     char **tokens = (char **)malloc(size * sizeof(char*));
     
-    if (!tokens) 
+    if (tokens == NULL) { 
         return NULL;
+    }
 
     // first token 
     char *token = strtok(str, SP_DELIM);
@@ -127,7 +127,7 @@ char **sp_tokens(char *str) {
             size += size; // double buffer size
 
             char *temp = (char*)realloc(tokens, size * sizeof(char*));
-            if (!temp) {
+            if (temp == NULL) {
                 free(tokens);
                 return NULL;
             }
@@ -149,15 +149,17 @@ const char *next(char **src, TokenType *type) {
         char token = **src;
         (*src)++; // go to the next character
     
-        if (token == '\n') 
+        if (token == '\n') {
             // if the current character is newline 
             // increment line counter
-            line++; 
+            line++;
+        }
          
         // handle single line comments
         else if (token == '/' && **src == '/') {
-            while (**src != '\0' && **src != '\n') 
+            while (**src != '\0' && **src != '\n') {
                 (*src)++;
+            }
             
             if (**src == '\n') {
                 line++;
@@ -175,8 +177,9 @@ const char *next(char **src, TokenType *type) {
                     break;
                 }
                 
-                if (**src == '\n') 
+                if (**src == '\n') {
                     line++;
+                }
         
                 (*src)++;
             }
@@ -186,8 +189,9 @@ const char *next(char **src, TokenType *type) {
             // allocate memory to copy identifier
             char *id = (char *)malloc(MAX_CANON * sizeof(char));
             
-            if (!id) 
+            if (id == NULL) { 
                 return NULL;
+            }
     
             int k   = 0; // last position of buffer
             id[k++] = token; // append character to identifier
@@ -216,8 +220,9 @@ const char *next(char **src, TokenType *type) {
             // store the digit as a string object
             char *num = (char *)malloc(MAX_CANON * sizeof(char));
             
-            if (!num) 
+            if (num == NULL) { 
                 return NULL;
+            }
 
             int k    = 0;
             num[k++] = token;
@@ -239,8 +244,9 @@ const char *next(char **src, TokenType *type) {
         else if (token == '-' && isdigit(**src)) {
             char *num = (char *)malloc(MAX_CANON * sizeof(char));
             
-            if (!num) 
+            if (num == NULL) {
                 return NULL;
+            }
 
             int k    = 0;
             num[k++] = token;
@@ -260,8 +266,9 @@ const char *next(char **src, TokenType *type) {
             // allocate memory for the string literal
             char *str_lit = (char *)malloc(MAX_CANON * sizeof(char));
             
-            if (!str_lit)
-                return NULL;           
+            if (str_lit == NULL) {
+                return NULL;     
+            }
 
             char *str_lit_start = str_lit; // keep the start of the string for returning
             *str_lit            = token; // append the current pos in src
@@ -291,9 +298,9 @@ const char *next(char **src, TokenType *type) {
                             *str_lit = **src;
                             break;
                     }
-                } 
-                else 
+                } else {
                     *str_lit = **src; // append the current pos to the string
+                }
                 
                 // increment to the next position
                 str_lit++; 
@@ -302,11 +309,11 @@ const char *next(char **src, TokenType *type) {
 
             // null terminate string
             *str_lit  = '\0';
-            if (**src == token) 
+            if (**src == token) { 
                 (*src)++;
+            }
 
             *type = STRING_LITERAL;
-            
             return str_lit_start;
         }
         // special operator case
@@ -315,32 +322,30 @@ const char *next(char **src, TokenType *type) {
             
             // store operator in a string object
             char *op = (char *)malloc(3 * sizeof(char)); 
-            if (!op) 
+            if (op == NULL) { 
                 return NULL;
+            }
             
             op[0] = token; // append operator to string
             
             // in case '==' or '+=' or '++' etc...
             if (**src == '=') { 
                 op[1] = **src;
-                (*src)++;
-            
                 op[2] = '\0';
+                (*src)++;
             } else if ((token == '+' && **src == '+') || (token == '-' && **src == '-') ||
                        (token == '|' && **src == '|') || (token == '&' && **src == '&')) {
                 op[1] = **src;
-                (*src)++;
-                
                 op[2] = '\0';
+                (*src)++;
             } else if (token == '-' && **src == '>') {
                 op[1] = **src;
-                (*src)++;
-                
                 op[2] = '\0';
-            } 
-            else 
+                (*src)++;
+            } else {
                 op[1] = '\0';
-
+            }
+            
             *type = OPERATOR;
             
             return op;
@@ -348,10 +353,10 @@ const char *next(char **src, TokenType *type) {
         // special characters and parentheses
         else if (strchr("^%#*?~,;[](){}.", token)) {
             char *token_str = (char *)malloc(2 * sizeof(char));
-            
-            if (!token_str) 
+            if (token_str == NULL) { 
                 return NULL;
-
+            }
+                
             token_str[0] = token; // append token
             token_str[1] = '\0'; // null terminate
             
@@ -367,7 +372,7 @@ const char *next(char **src, TokenType *type) {
 
 /*--tokenize the input buffer--*/
 struct token *get_tokens(char *buf) {
-    if (!buf) 
+    if (buf == NULL) 
         return NULL; 
 
     // initialize the tokens list
