@@ -372,8 +372,9 @@ const char *next(char **src, TokenType *type) {
 
 /*--tokenize the input buffer--*/
 struct token *get_tokens(char *buf) {
-    if (buf == NULL) 
+    if (buf == NULL) {
         return NULL; 
+    }
 
     // initialize the tokens list
     struct token *tokens = NULL;
@@ -384,8 +385,8 @@ struct token *get_tokens(char *buf) {
     // while the next token is not null
     while ((token = next(&buf, &type)) != NULL) {
         // allocate memory for the current token in the list
-        struct token *t = (struct token*)malloc(sizeof(struct token));
-        if (!t) {
+        struct token *tok = (struct token *)malloc(sizeof(struct token));
+        if (tok == NULL) {
             fprintf(stderr, 
                     "Memory allocation failed!\n");
             
@@ -393,17 +394,18 @@ struct token *get_tokens(char *buf) {
         }
         
         // set the current token data
-        t->type = type;
-        t->tok  = (char *)token;
-        t->next = NULL;
+        tok->type = type;
+        tok->tok  = (char *)token;
+        tok->next = NULL;
 
         // append token to the list
-        if (!tokens) 
+        if (tokens == NULL) { 
             tokens = t;
-        else 
+        } else {
             last->next = t;
+        }
         
-        last = t; // keep track of the last token in the list
+        last = tok; // keep track of the last token in the list
     }
 
     return tokens;
