@@ -413,9 +413,8 @@ struct token *get_tokens(char *buf) {
 
 // free the token list
 void free_tokens(struct token *tokens) {
-    while (tokens) {
+    while (tokens != NULL) {
         struct token *next = tokens->next;
-
         if (strcmp(tokens->tok, "") != 0) {
             free(tokens->tok);
             free(tokens);
@@ -450,9 +449,9 @@ int main(void) {
     // open file in reading mode
     FILE *fp = fopen("file.txt", "r");
 
-    if (!fp) {
+    if (fp == NULL) {
         fprintf(stderr, 
-                    "\nfailed to open file : 'file.c'\n");
+                "\nfailed to open file : 'file.c'\n");
         
         return -1;
     }
@@ -465,7 +464,7 @@ int main(void) {
     // allocate memory for the input buffer given the file size
     char *buf = (char*)malloc(file_size * sizeof(char));
     
-    if (!buf) {
+    if (buf == NULL) {
         fclose(fp);
         fprintf(stderr, 
                 "memory allocation failed!\n");
@@ -474,13 +473,12 @@ int main(void) {
     }
 
     // try reading file and loading to buffer
-    if (fread(buf, sizeof(char), file_size, fp) != file_size) {
-        fclose(fp);
-        free(buf);    
+    if (fread(buf, sizeof(char), file_size, fp) != file_size) {            
         fprintf(stderr, 
                 "\nFailed to read file!");
-        
-        
+
+        fclose(fp);
+        free(buf);
         return -1;
     }
 
@@ -488,11 +486,11 @@ int main(void) {
 
     // get the token list given input buffer
     struct token *tokens = get_tokens(buf);
-    if (!tokens) {
-        free(buf);
+    if (tokens == NULL) {
         fprintf(stderr, 
                 "\nFailed to tokenize buffer!\n");
 
+        free(buf);
         return -1;
     }
 
@@ -501,9 +499,8 @@ int main(void) {
     // print the token list
     struct token *p = tokens;
     
-    while (p) {
+    while (p != NULL) {
         printf("%s\n", p->tok);
-
         p = p->next;
     }
 
