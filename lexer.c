@@ -12,13 +12,13 @@ long line = 1; // line counter
 
 // token types
 typedef enum {
-    IDENTIFIER,
+    IDENTIF,
     NUMBER,
-    STRING_LITERAL,
+    STR_LIT,
     OPERATOR,
     DELIMITER,
     KEYWORD,
-    UNKNOWN
+    NONE
 } TokenType;
 
 // token list node
@@ -106,8 +106,7 @@ char *read_file(const char *filename) {
 char **sp_tokens(char *str) {
     size_t size = BUFSIZ; // initial buffer size
     // allocate memory for tokens array
-    char **tokens = (char **)malloc(size * sizeof(char*));
-    
+    char **tokens = (char **)malloc(size * sizeof(char*));   
     if (tokens == NULL) { 
         return NULL;
     }
@@ -120,12 +119,10 @@ char **sp_tokens(char *str) {
     while (token) {
         // append token to array
         tokens[i++] = token;
-
         // if buffer size if not enough
         // reallocate buffer memory
         if (i >= size) 
             size += size; // double buffer size
-
             char *temp = (char*)realloc(tokens, size * sizeof(char*));
             if (temp == NULL) {
                 free(tokens);
@@ -148,7 +145,7 @@ const char *next(char **src, TokenType *type) {
         // copy the current position character
         char token = **src;
         (*src)++; // go to the next character
-    
+        
         if (token == '\n') {
             // if the current character is newline 
             // increment line counter
@@ -211,7 +208,7 @@ const char *next(char **src, TokenType *type) {
                 return id;
             }
 
-            *type = IDENTIFIER;
+            *type = IDENTIF;
             
             return id;
         } 
@@ -282,15 +279,41 @@ const char *next(char **src, TokenType *type) {
                     (*src)++;
                     
                     switch (**src) {
-                        case 'n' : *str_lit = '\n'; break;
-                        case 't' : *str_lit = '\t'; break;
-                        case 'r' : *str_lit = '\r'; break;
-                        case 'b' : *str_lit = '\b'; break;
-                        case 'f' : *str_lit = '\f'; break;
-                        case 'v' : *str_lit = '\v'; break;
-                        case '\\': *str_lit = '\\'; break;
-                        case '"' : *str_lit = '"' ; break;
-                        case '\'': *str_lit = '\''; break;
+                        case 'n' : 
+                            *str_lit = '\n'; 
+                            break;
+                        
+                        case 't' : 
+                            *str_lit = '\t'; 
+                            break;
+                        
+                        case 'r' : 
+                            *str_lit = '\r'; 
+                            break;
+                        
+                        case 'b' : 
+                            *str_lit = '\b'; 
+                            break;
+                        
+                        case 'f' : 
+                            *str_lit = '\f'; 
+                            break;
+                        
+                        case 'v' : 
+                            *str_lit = '\v'; 
+                            break;
+                        
+                        case '\\': 
+                            *str_lit = '\\'; 
+                            break;
+                        
+                        case '"' : 
+                            *str_lit = '"' ; 
+                            break;
+                        
+                        case '\'': 
+                            *str_lit = '\''; 
+                            break;
                         
                         default:
                             *str_lit = '\\';
@@ -313,7 +336,7 @@ const char *next(char **src, TokenType *type) {
                 (*src)++;
             }
 
-            *type = STRING_LITERAL;
+            *type = STR_LIT;
             return str_lit_start;
         }
         // special operator case
@@ -431,10 +454,10 @@ const char *token_type_to_string(TokenType type) {
         case KEYWORD:        return "KEYWORD";
         case IDENTIFIER:     return "IDENTIFIER";
         case NUMBER:         return "NUMBER";
-        case STRING_LITERAL: return "STRING_LITERAL";
+        case STR_LIT:        return "STRING_LITERAL";
         case OPERATOR:       return "OPERATOR";
         case DELIMITER:      return "DELIMITER";
-        case UNKNOWN:        return "UNKNOWN";
+        case NONE:           return "UNKNOWN";
         default:             return "UNKNOWN";
     }
 
@@ -448,7 +471,6 @@ const char *token_type_to_string(TokenType type) {
 int main(void) {
     // open file in reading mode
     FILE *fp = fopen("file.txt", "r");
-
     if (fp == NULL) {
         fprintf(stderr, 
                 "\nfailed to open file : 'file.c'\n");
@@ -463,7 +485,6 @@ int main(void) {
 
     // allocate memory for the input buffer given the file size
     char *buf = (char*)malloc(file_size * sizeof(char));
-    
     if (buf == NULL) {
         fclose(fp);
         fprintf(stderr, 
