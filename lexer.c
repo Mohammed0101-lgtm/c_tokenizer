@@ -47,7 +47,7 @@ const char *keywords[] = {
 
 // check if a string is a keyword
 bool isKeyword(const char *string) {
-    const int n = 32; // keywords size
+    const int n = 32; // number of c keywords
 
     // find keyword
     for (int i = 0; i < n; i++) {
