@@ -170,7 +170,7 @@ const char *next(char **src, TokenType *type) {
             
             while (**src != '\0') {
                 if (**src == '*' && *(*src + 1) == '/') {
-                    (*src) += 2; // move past the */
+                    (*src) += 2; // move past the '*/'
                     break;
                 }
                 
@@ -448,9 +448,9 @@ void free_tokens(struct token *tokens) {
 }
 
 // convert the token type to string for output
-const char *token_type_to_string(TokenType type) {
-    
-    switch (type) {
+const char *token_type_to_string(const TokenType *type) {
+    assert(type != NULL);
+    switch (*type) {
         case KEYWORD:        return "KEYWORD";
         case IDENTIFIER:     return "IDENTIFIER";
         case NUMBER:         return "NUMBER";
@@ -460,7 +460,6 @@ const char *token_type_to_string(TokenType type) {
         case NONE:           return "UNKNOWN";
         default:             return "UNKNOWN";
     }
-
 }
 
 /*
