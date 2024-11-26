@@ -14,7 +14,7 @@ long line = 1; // line counter
 typedef enum {
     IDENTIF,
     NUMBER,
-    STR_LIT,
+    STR_LIT, // string literal
     OPERATOR,
     DELIMITER,
     KEYWORD,
@@ -25,11 +25,11 @@ typedef enum {
 struct token {
     TokenType type;
     char *tok;
-    
+
     struct token *next;
 };
 
-// escapse sequence
+// escapse sequences
 const char *_esc[] = {
     "\\b", "\\f", "\\n", "\\r", "\\t", "\\v", "\\\\", "\\", "\\\""
 };
