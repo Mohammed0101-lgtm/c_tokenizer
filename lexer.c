@@ -1,4 +1,5 @@
 /*---include c standard lib---*/
+#include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -22,12 +23,12 @@ typedef enum {
 } TokenType;
 
 // token list node
-struct token {
+typedef struct token {
     TokenType type;
     char*     tok;
 
     struct token* next;
-};
+} Token;
 
 // escapse sequences
 const char* _esc[] = {"\\b", "\\f", "\\n", "\\r", "\\t", "\\v", "\\\\", "\\", "\\\""};
@@ -131,7 +132,7 @@ char** sp_tokens(char* str) {
 }
 
 // next token in input stream
-const char* next(char** src, TokenType* type) {
+char* next(char** src, TokenType* type) {
     // while not at the end of the input buffer
     while (**src != '\0')
     {
@@ -402,51 +403,11 @@ const char* next(char** src, TokenType* type) {
     return NULL;  // if neither then ignore
 }
 
-
-/*--tokenize the input buffer--*/
-struct token* get_tokens(char* buf) {
-    if (!buf)
-        return NULL;
-
-    // initialize the tokens list
-    struct token* tokens = NULL;
-    struct token* last   = NULL;
-    const char*   token  = NULL;
-    TokenType     type;
-
-    // while the next token is not null
-    while ((token = next(&buf, &type)))
-    {
-        // allocate memory for the current token in the list
-        struct token* tok = (struct token*) malloc(sizeof(struct token));
-        if (!tok)
-        {
-            fprintf(stderr, "Memory allocation failed!\n");
-            return tokens;
-        }
-
-        // set the current token data
-        tok->type = type;
-        tok->tok  = (char*) token;
-        tok->next = NULL;
-
-        // append token to the list
-        if (!tokens)
-            tokens = tok;
-        else
-            last->next = tok;
-
-        last = last->next;  // keep track of the last token in the list
-    }
-
-    return tokens;
-}
-
 // free the token list
-void free_tokens(struct token* tokens) {
+void free_tokens(Token* tokens) {
     while (tokens)
     {
-        struct token* next = tokens->next;
+        Token* next = tokens->next;
         if (strcmp(tokens->tok, "") != 0)
         {
             free(tokens->tok);
@@ -456,6 +417,55 @@ void free_tokens(struct token* tokens) {
         tokens = next;
     }
 }
+
+/*--tokenize the input buffer--*/
+Token* get_tokens(char* buf) {
+    if (!buf) {
+        fprintf(stderr, "get_token : Invalid argument!\n");
+        return NULL;
+    }
+    
+    // initialize the tokens list
+    Token*      tokens = NULL;
+    Token*      last   = NULL;
+    char* token  = NULL;
+    TokenType   type;
+
+    // while the next token is not null
+     while ((token = next(&buf, &type))) {
+        // Allocate memory for the current token
+        Token* tok = (Token*) malloc(sizeof(Token));
+        if (!tok) {
+            fprintf(stderr, "get_tokens: Memory allocation failed!\n");
+            free_tokens(tokens);
+            return NULL;
+        }
+
+        // Duplicate the token string
+        tok->tok = strdup(token);
+        if (!tok->tok) {
+            fprintf(stderr, "get_tokens: Memory allocation for token failed!\n");
+            free(tok);
+            free_tokens(tokens);
+            return NULL;
+        }
+
+        // Set token details
+        tok->type = type;
+        tok->next = NULL;
+
+        // Append token to the list
+        if (!tokens) {
+            tokens = tok;
+        } else {
+            last->next = tok;
+        }
+        last = tok;  // Update the last token
+    }
+
+    return tokens;
+}
+
 
 // convert the token type to string for output
 const char* token_type_to_string(const TokenType* type) {
@@ -488,42 +498,14 @@ const char* token_type_to_string(const TokenType* type) {
     a lot of testing and edge case handling
 */
 int main(void) {
-    // open file in reading mode
-    FILE* fp = fopen("file.txt", "r");
-    if (!fp)
-    {
-        fprintf(stderr, "\nfailed to open file : 'file.c'\n");
+    char *buf = read_file("file.txt");
+    if (!buf) {
+        fprintf(stderr, "read_file failed!\n");
         return -1;
     }
-
-    // get file size
-    fseek(fp, 0, SEEK_END);      // point to the end of file
-    long file_size = ftell(fp);  // get the file size
-    rewind(fp);                  // go back to the start
-
-    // allocate memory for the input buffer given the file size
-    char* buf = (char*) malloc(file_size * sizeof(char));
-    if (!buf)
-    {
-        fclose(fp);
-        fprintf(stderr, "memory allocation failed!\n");
-        return -1;
-    }
-
-    // try reading file and loading to buffer
-    if (fread(buf, sizeof(char), file_size, fp) != file_size)
-    {
-        fprintf(stderr, "\nFailed to read file!");
-
-        fclose(fp);
-        free(buf);
-        return -1;
-    }
-
-    fclose(fp);  // close file
 
     // get the token list given input buffer
-    struct token* tokens = get_tokens(buf);
+    Token* tokens = get_tokens(buf);
     if (!tokens)
     {
         fprintf(stderr, "\nFailed to tokenize buffer!\n");
@@ -534,7 +516,7 @@ int main(void) {
     free(buf);  // free buffer , we do not need it anymore
 
     // print the token list
-    struct token* p = tokens;
+    Token* p = tokens;
 
     while (p)
     {
