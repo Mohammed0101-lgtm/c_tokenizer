@@ -420,22 +420,25 @@ void free_tokens(Token* tokens) {
 
 /*--tokenize the input buffer--*/
 Token* get_tokens(char* buf) {
-    if (!buf) {
+    if (!buf)
+    {
         fprintf(stderr, "get_token : Invalid argument!\n");
         return NULL;
     }
-    
+
     // initialize the tokens list
-    Token*      tokens = NULL;
-    Token*      last   = NULL;
-    char* token  = NULL;
-    TokenType   type;
+    Token*    tokens = NULL;
+    Token*    last   = NULL;
+    char*     token  = NULL;
+    TokenType type;
 
     // while the next token is not null
-     while ((token = next(&buf, &type))) {
+    while ((token = next(&buf, &type)))
+    {
         // Allocate memory for the current token
         Token* tok = (Token*) malloc(sizeof(Token));
-        if (!tok) {
+        if (!tok)
+        {
             fprintf(stderr, "get_tokens: Memory allocation failed!\n");
             free_tokens(tokens);
             return NULL;
@@ -443,7 +446,8 @@ Token* get_tokens(char* buf) {
 
         // Duplicate the token string
         tok->tok = strdup(token);
-        if (!tok->tok) {
+        if (!tok->tok)
+        {
             fprintf(stderr, "get_tokens: Memory allocation for token failed!\n");
             free(tok);
             free_tokens(tokens);
@@ -455,9 +459,12 @@ Token* get_tokens(char* buf) {
         tok->next = NULL;
 
         // Append token to the list
-        if (!tokens) {
+        if (!tokens)
+        {
             tokens = tok;
-        } else {
+        }
+        else
+        {
             last->next = tok;
         }
         last = tok;  // Update the last token
@@ -498,8 +505,9 @@ const char* token_type_to_string(const TokenType* type) {
     a lot of testing and edge case handling
 */
 int main(void) {
-    char *buf = read_file("file.txt");
-    if (!buf) {
+    char* buf = read_file("file.txt");
+    if (!buf)
+    {
         fprintf(stderr, "read_file failed!\n");
         return -1;
     }
