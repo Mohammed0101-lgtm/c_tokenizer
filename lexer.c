@@ -93,6 +93,46 @@ char* read_file(const char* filename) {
     return buf;
 }
 
+Token* create_token(const char* _token, const TokenType type) {
+    Token* tok = (Token*) malloc(sizeof(Token));
+    if (!tok)
+    {
+        fprintf(stderr, "Malloc Failed!\n");
+        return NULL;
+    }
+
+    tok->next = NULL;
+    tok->tok  = strdup(_token);
+    tok->type = type;
+
+    return tok;
+}
+
+Token* append_node(Token* head, Token* tok) {
+    if (!tok)
+    {
+        fprintf(stderr, "append_node : invalid argument\n");
+        return NULL;
+    }
+
+    if (!head)
+    {
+        head       = tok;
+        head->next = NULL;
+        return head;
+    }
+
+    Token* ptr = head;
+
+    while (ptr->next)
+        ptr = ptr->next;
+
+    ptr->next = tok;
+    tok->next = NULL;
+
+    return head;
+}
+
 /*--space tokenize--*/
 char** sp_tokens(char* str) {
     size_t size = BUFSIZ;  // initial buffer size
@@ -263,7 +303,7 @@ char* next(char** src, TokenType* type) {
             // allocate memory for the string literal
             char* str_lit = (char*) malloc(MAX_CANON * sizeof(char));
 
-            if (str_lit)
+            if (!str_lit)
                 return NULL;
 
             char* str_lit_start = str_lit;  // keep the start of the string for returning
@@ -428,46 +468,24 @@ Token* get_tokens(char* buf) {
 
     // initialize the tokens list
     Token*    tokens = NULL;
-    Token*    last   = NULL;
     char*     token  = NULL;
     TokenType type;
 
     // while the next token is not null
     while ((token = next(&buf, &type)))
     {
-        // Allocate memory for the current token
-        Token* tok = (Token*) malloc(sizeof(Token));
+        Token* tok = create_token(token, type);
         if (!tok)
         {
-            fprintf(stderr, "get_tokens: Memory allocation failed!\n");
+            fprintf(stderr, "Create_token failed\n");
             free_tokens(tokens);
             return NULL;
         }
-
-        // Duplicate the token string
-        tok->tok = strdup(token);
-        if (!tok->tok)
-        {
-            fprintf(stderr, "get_tokens: Memory allocation for token failed!\n");
-            free(tok);
-            free_tokens(tokens);
-            return NULL;
-        }
-
-        // Set token details
-        tok->type = type;
-        tok->next = NULL;
 
         // Append token to the list
+        tokens = append_node(tokens, tok);
         if (!tokens)
-        {
-            tokens = tok;
-        }
-        else
-        {
-            last->next = tok;
-        }
-        last = tok;  // Update the last token
+            return NULL;
     }
 
     return tokens;
