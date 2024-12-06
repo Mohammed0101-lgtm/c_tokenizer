@@ -491,7 +491,6 @@ Token* get_tokens(char* buf) {
     return tokens;
 }
 
-
 // convert the token type to string for output
 const char* token_type_to_string(const TokenType* type) {
     assert(type);
