@@ -23,7 +23,8 @@ typedef enum {
 } TokenType;
 
 // token list node
-typedef struct token {
+typedef struct token
+{
     TokenType type;
     char*     tok;
 
@@ -45,10 +46,8 @@ bool isKeyword(const char* string) {
 
     // find keyword
     for (int i = 0; i < n; i++)
-    {
         if (strcmp(string, keywords[i]))
             return true;
-    }
 
     // not found
     return false;
@@ -356,12 +355,6 @@ char* next(char** src, TokenType* type) {
                     case '\'' :
                         *str_lit = '\'';
                         break;
-
-                    default :
-                        *str_lit = '\\';
-                        str_lit++;
-                        *str_lit = **src;
-                        break;
                     }
                 }
                 else
@@ -402,8 +395,7 @@ char* next(char** src, TokenType* type) {
                 op[2] = '\0';
                 (*src)++;
             }
-            else if ((token == '+' && **src == '+') || (token == '-' && **src == '-') || (token == '|' && **src == '|')
-                     || (token == '&' && **src == '&'))
+            else if (token == **src)
             {
                 op[1] = **src;
                 op[2] = '\0';
@@ -421,7 +413,6 @@ char* next(char** src, TokenType* type) {
             }
 
             *type = OPERATOR;
-
             return op;
         }
         // special characters and parentheses
@@ -435,7 +426,6 @@ char* next(char** src, TokenType* type) {
             token_str[1] = '\0';   // null terminate
 
             *type = DELIMITER;
-
             return token_str;
         }
     }
@@ -522,7 +512,7 @@ const char* token_type_to_string(const TokenType* type) {
     a lot of testing and edge case handling
 */
 int main(void) {
-    char* buf = read_file("file.txt");
+    char* buf = read_file("token.c");
     if (!buf)
     {
         fprintf(stderr, "read_file failed!\n");
