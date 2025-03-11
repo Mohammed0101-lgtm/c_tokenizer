@@ -176,16 +176,16 @@ char* next(char** src, TokenType* type) {
     while (**src != '\0')
     {
         // copy the current position character
-        char token = **src;
+        char current = **src;
         (*src)++;  // go to the next character
 
-        if (token == '\n')
+        if (current == '\n')
             // if the current character is newline
             // increment line counter
             line++;
 
         // handle single line comments
-        else if (token == '/' && **src == '/')
+        else if (current == '/' && **src == '/')
         {
             while (**src != '\0' && **src != '\n')
                 (*src)++;
@@ -197,7 +197,7 @@ char* next(char** src, TokenType* type) {
             }
         }
         // handle multi-line comments
-        else if (token == '/' && **src == '*')
+        else if (current == '/' && **src == '*')
         {
             (*src)++;  // move past the *
 
@@ -216,7 +216,7 @@ char* next(char** src, TokenType* type) {
             }
         }
         // if the current character is an identifier sequence starter
-        else if (isalpha(token) || token == '_')
+        else if (isalpha(current) || current == '_')
         {
             // allocate memory to copy identifier
             char* id = (char*) malloc(MAX_CANON * sizeof(char));
@@ -224,8 +224,8 @@ char* next(char** src, TokenType* type) {
             if (!id)
                 return NULL;
 
-            int k   = 0;      // last position of buffer
-            id[k++] = token;  // append character to identifier
+            int k   = 0;        // last position of buffer
+            id[k++] = current;  // append character to identifier
 
             // while the next character is an identifier character
             // append it to the buffer
@@ -249,7 +249,7 @@ char* next(char** src, TokenType* type) {
             return id;
         }
         // if the current token is a digit
-        else if (isdigit(token))
+        else if (isdigit(current))
         {
             // store the digit as a string object
             char* num = (char*) malloc(MAX_CANON * sizeof(char));
@@ -258,7 +258,7 @@ char* next(char** src, TokenType* type) {
                 return NULL;
 
             int k    = 0;
-            num[k++] = token;
+            num[k++] = current;
 
             // while the character is a digit
             // append it to the string
@@ -275,7 +275,7 @@ char* next(char** src, TokenType* type) {
         }
         // in case of a negative number
         // same as before but insert '-'
-        else if (token == '-' && isdigit(**src))
+        else if (current == '-' && isdigit(**src))
         {
             char* num = (char*) malloc(MAX_CANON * sizeof(char));
 
@@ -283,7 +283,7 @@ char* next(char** src, TokenType* type) {
                 return NULL;
 
             int k    = 0;
-            num[k++] = token;
+            num[k++] = current;
 
             while (isdigit(**src))
             {
@@ -297,7 +297,7 @@ char* next(char** src, TokenType* type) {
             return num;
         }
         // handle single and double quotes
-        else if (token == '\'' || token == '"')
+        else if (current == '\'' || current == '"')
         {
             // allocate memory for the string literal
             char* str_lit = (char*) malloc(MAX_CANON * sizeof(char));
@@ -306,12 +306,12 @@ char* next(char** src, TokenType* type) {
                 return NULL;
 
             char* str_lit_start = str_lit;  // keep the start of the string for returning
-            *str_lit            = token;    // append the current pos in src
+            *str_lit            = current;  // append the current pos in src
 
             str_lit++;  // go to the next
             (*src)++;
 
-            while (**src != '\0' && **src != '\n' && **src != token)
+            while (**src != '\0' && **src != '\n' && **src != current)
             {
                 // handle common escape sequences
                 if (**src == '\\')
@@ -370,15 +370,15 @@ char* next(char** src, TokenType* type) {
             // null terminate string
             *str_lit = '\0';
 
-            if (**src == token)
+            if (**src == current)
                 (*src)++;
 
             *type = STR_LIT;
             return str_lit_start;
         }
         // special operator case
-        else if (token == '=' || token == '<' || token == '>' || token == '!' || token == '+' || token == '-'
-                 || token == '|' || token == '&')
+        else if (current == '=' || current == '<' || current == '>' || current == '!' || current == '+'
+                 || current == '-' || current == '|' || current == '&')
         {
 
             // store operator in a string object
@@ -386,7 +386,7 @@ char* next(char** src, TokenType* type) {
             if (!op)
                 return NULL;
 
-            op[0] = token;  // append operator to string
+            op[0] = current;  // append operator to string
 
             // in case '==' or '+=' or '++' etc...
             if (**src == '=')
@@ -395,13 +395,13 @@ char* next(char** src, TokenType* type) {
                 op[2] = '\0';
                 (*src)++;
             }
-            else if (token == **src)
+            else if (current == **src)
             {
                 op[1] = **src;
                 op[2] = '\0';
                 (*src)++;
             }
-            else if (token == '-' && **src == '>')
+            else if (current == '-' && **src == '>')
             {
                 op[1] = **src;
                 op[2] = '\0';
@@ -416,14 +416,14 @@ char* next(char** src, TokenType* type) {
             return op;
         }
         // special characters and parentheses
-        else if (strchr("^%#*?~,;[](){}.", token))
+        else if (strchr("^%#*?~,;[](){}.", current))
         {
             char* token_str = (char*) malloc(2 * sizeof(char));
             if (!token_str)
                 return NULL;
 
-            token_str[0] = token;  // append token
-            token_str[1] = '\0';   // null terminate
+            token_str[0] = current;  // append current
+            token_str[1] = '\0';     // null terminate
 
             *type = DELIMITER;
             return token_str;
