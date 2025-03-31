@@ -13,41 +13,49 @@ long line = 1;  // line counter
 
 // token types
 typedef enum {
-    IDENTIF,
+    IDENTIF,  // identifier
     NUMBER,
     STR_LIT,  // string literal
     OPERATOR,
-    DELIMITER,
+    DELIMITER,  // space delimiters
     KEYWORD,
     NONE
 } TokenType;
 
-// token list node
 typedef struct token
 {
     TokenType type;
-    char*     tok;
-
-    struct token* next;
+    char*     value;
 } Token;
 
-// escapse sequences
+// token list node / tuple for token categrisation '<TokenType | Token>'
+typedef struct Node
+{
+    Token*       tok;
+    struct Node* next;
+} Node;
+
+// escapse sequences table
 const char* _esc[] = {"\\b", "\\f", "\\n", "\\r", "\\t", "\\v", "\\\\", "\\", "\\\""};
 
-// standard c keywords
+// standard c keywords table
 const char* keywords[] = {"auto",   "break",  "case",     "char",   "const",    "continue", "default",  "do",
                           "double", "else",   "enum",     "extern", "float",    "for",      "goto",     "if",
                           "int",    "long",   "register", "return", "short",    "signed",   "sizeof",   "static",
                           "struct", "switch", "typedef",  "union",  "unsigned", "void",     "volatile", "while"};
 
 // check if a string is a keyword
-bool isKeyword(const char* string) {
+bool is_keyword(const char* string) {
     const int n = 32;  // number of c keywords
 
     // find keyword
     for (int i = 0; i < n; i++)
+    {
         if (strcmp(string, keywords[i]))
+        {
             return true;
+        }
+    }
 
     // not found
     return false;
@@ -100,15 +108,34 @@ Token* create_token(const char* _token, const TokenType type) {
         return NULL;
     }
 
-    tok->next = NULL;
-    tok->tok  = strdup(_token);
-    tok->type = type;
+    tok->value = strdup(_token);
+    if (!tok->value)
+    {
+        fprintf(stderr, "strdup() Failed!\n");
+        free(tok);
+        return NULL;
+    }
 
+    tok->type = type;
     return tok;
 }
 
-Token* append_node(Token* head, Token* tok) {
-    if (!tok)
+Node* create_node(const Token* tok) {
+    Node* node = (Node*) malloc(sizeof(Node));
+    if (!node)
+    {
+        fprintf(stderr, "malloc() Failed!\n");
+        return NULL;
+    }
+
+    node->tok  = tok;
+    node->next = NULL;
+
+    return node;
+}
+
+Node* append_node(Node* head, Node* new /* new is a cpp keyword */) {
+    if (!new)
     {
         fprintf(stderr, "append_node : invalid argument\n");
         return NULL;
@@ -116,18 +143,20 @@ Token* append_node(Token* head, Token* tok) {
 
     if (!head)
     {
-        head       = tok;
+        head       = new;
         head->next = NULL;
         return head;
     }
 
-    Token* ptr = head;
+    Node* ptr = head;
 
     while (ptr->next)
+    {
         ptr = ptr->next;
+    }
 
-    ptr->next = tok;
-    tok->next = NULL;
+    ptr->next = new;
+    new->next = NULL;
 
     return head;
 }
@@ -135,10 +164,13 @@ Token* append_node(Token* head, Token* tok) {
 /*--space tokenize--*/
 char** sp_tokens(char* str) {
     size_t size = BUFSIZ;  // initial buffer size
+
     // allocate memory for tokens array
     char** tokens = (char**) malloc(size * sizeof(char*));
     if (!tokens)
+    {
         return NULL;
+    }
 
     // first token
     char*  token = strtok(str, SP_DELIM);
@@ -149,11 +181,13 @@ char** sp_tokens(char* str) {
     {
         // append token to array
         tokens[i++] = token;
+
         // if buffer size if not enough
         // reallocate buffer memory
         if (i >= size)
         {
             size += size;  // double buffer size
+
             char* temp = (char*) realloc(tokens, size * sizeof(char*));
             if (!temp)
             {
@@ -180,15 +214,19 @@ char* next(char** src, TokenType* type) {
         (*src)++;  // go to the next character
 
         if (current == '\n')
+        {
             // if the current character is newline
             // increment line counter
             line++;
+        }
 
         // handle single line comments
         else if (current == '/' && **src == '/')
         {
             while (**src != '\0' && **src != '\n')
+            {
                 (*src)++;
+            }
 
             if (**src == '\n')
             {
@@ -210,7 +248,9 @@ char* next(char** src, TokenType* type) {
                 }
 
                 if (**src == '\n')
+                {
                     line++;
+                }
 
                 (*src)++;
             }
@@ -220,9 +260,10 @@ char* next(char** src, TokenType* type) {
         {
             // allocate memory to copy identifier
             char* id = (char*) malloc(MAX_CANON * sizeof(char));
-
             if (!id)
+            {
                 return NULL;
+            }
 
             int k   = 0;        // last position of buffer
             id[k++] = current;  // append character to identifier
@@ -253,9 +294,10 @@ char* next(char** src, TokenType* type) {
         {
             // store the digit as a string object
             char* num = (char*) malloc(MAX_CANON * sizeof(char));
-
             if (!num)
+            {
                 return NULL;
+            }
 
             int k    = 0;
             num[k++] = current;
@@ -278,9 +320,10 @@ char* next(char** src, TokenType* type) {
         else if (current == '-' && isdigit(**src))
         {
             char* num = (char*) malloc(MAX_CANON * sizeof(char));
-
             if (!num)
+            {
                 return NULL;
+            }
 
             int k    = 0;
             num[k++] = current;
@@ -301,9 +344,10 @@ char* next(char** src, TokenType* type) {
         {
             // allocate memory for the string literal
             char* str_lit = (char*) malloc(MAX_CANON * sizeof(char));
-
             if (!str_lit)
+            {
                 return NULL;
+            }
 
             char* str_lit_start = str_lit;  // keep the start of the string for returning
             *str_lit            = current;  // append the current pos in src
@@ -371,7 +415,9 @@ char* next(char** src, TokenType* type) {
             *str_lit = '\0';
 
             if (**src == current)
+            {
                 (*src)++;
+            }
 
             *type = STR_LIT;
             return str_lit_start;
@@ -384,7 +430,9 @@ char* next(char** src, TokenType* type) {
             // store operator in a string object
             char* op = (char*) malloc(3 * sizeof(char));
             if (!op)
+            {
                 return NULL;
+            }
 
             op[0] = current;  // append operator to string
 
@@ -420,7 +468,9 @@ char* next(char** src, TokenType* type) {
         {
             char* token_str = (char*) malloc(2 * sizeof(char));
             if (!token_str)
+            {
                 return NULL;
+            }
 
             token_str[0] = current;  // append current
             token_str[1] = '\0';     // null terminate
@@ -434,22 +484,31 @@ char* next(char** src, TokenType* type) {
 }
 
 // free the token list
-void free_tokens(Token* tokens) {
-    while (tokens)
+void free_nodes(Node* head) {
+    while (head)
     {
-        Token* next = tokens->next;
-        if (strcmp(tokens->tok, "") != 0)
+        Node* next = head->next;
+        if (strcmp(head->tok, "") != 0)
         {
-            free(tokens->tok);
-            free(tokens);
+            if (head->tok->value)
+            {
+                free(head->tok->value);
+            }
+
+            if (head->tok)
+            {
+                free(head->tok);
+            }
+
+            free(head);
         }
 
-        tokens = next;
+        head = next;
     }
 }
 
 /*--tokenize the input buffer--*/
-Token* get_tokens(char* buf) {
+Node* get_tokens(char* buf) {
     if (!buf)
     {
         fprintf(stderr, "get_token : Invalid argument!\n");
@@ -457,8 +516,8 @@ Token* get_tokens(char* buf) {
     }
 
     // initialize the tokens list
-    Token*    tokens = NULL;
-    char*     token  = NULL;
+    Node*     list  = NULL;
+    char*     token = NULL;
     TokenType type;
 
     // while the next token is not null
@@ -467,18 +526,28 @@ Token* get_tokens(char* buf) {
         Token* tok = create_token(token, type);
         if (!tok)
         {
-            fprintf(stderr, "Create_token failed\n");
-            free_tokens(tokens);
+            fprintf(stderr, "create_token() failed!\n");
+            free_node(list);
+            return NULL;
+        }
+
+        Node* node = create_node(tok);
+        if (!node)
+        {
+            fprintf(stderr, "create_node() failed!\n");
+            free_nodes(list);
             return NULL;
         }
 
         // Append token to the list
-        tokens = append_node(tokens, tok);
-        if (!tokens)
+        list = append_node(list, node);
+        if (!list)
+        {
             return NULL;
+        }
     }
 
-    return tokens;
+    return list;
 }
 
 // convert the token type to string for output
@@ -520,8 +589,8 @@ int main(void) {
     }
 
     // get the token list given input buffer
-    Token* tokens = get_tokens(buf);
-    if (!tokens)
+    Node* list = get_tokens(buf);
+    if (!list)
     {
         fprintf(stderr, "\nFailed to tokenize buffer!\n");
         free(buf);
@@ -531,15 +600,15 @@ int main(void) {
     free(buf);  // free buffer , we do not need it anymore
 
     // print the token list
-    Token* p = tokens;
+    Node* p = list;
 
     while (p)
     {
-        printf("%s\n", p->tok);
+        printf("%s\n", p->tok->value);
         p = p->next;
     }
 
-    free_tokens(tokens);  // free token list
+    free_nodes(list);  // free token list
 
     return 0;
 }
