@@ -120,7 +120,7 @@ Token* create_token(const char* _token, const TokenType type) {
     return tok;
 }
 
-Node* create_node(const Token* tok) {
+Node* create_node(Token* tok) {
     Node* node = (Node*) malloc(sizeof(Node));
     if (!node)
     {
@@ -279,7 +279,7 @@ char* next(char** src, TokenType* type) {
             id[k] = '\0';  // null terminate
 
             // in case it's a keyword then change the token type
-            if (isKeyword(id))
+            if (is_keyword(id))
             {
                 *type = KEYWORD;
                 return id;
@@ -488,7 +488,7 @@ void free_nodes(Node* head) {
     while (head)
     {
         Node* next = head->next;
-        if (strcmp(head->tok, "") != 0)
+        if (strcmp(head->tok->value, "") != 0)
         {
             if (head->tok->value)
             {
@@ -527,7 +527,7 @@ Node* get_tokens(char* buf) {
         if (!tok)
         {
             fprintf(stderr, "create_token() failed!\n");
-            free_node(list);
+            free_nodes(list);
             return NULL;
         }
 
